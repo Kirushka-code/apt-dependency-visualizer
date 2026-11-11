@@ -3,6 +3,7 @@
 import io
 import tempfile
 import unittest
+from unittest.mock import patch
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
@@ -41,18 +42,24 @@ class CliTests(unittest.TestCase):
         self.assertFalse(arguments.test_mode)
 
     def test_output(self):
-        """Print every configurable parameter as a key-value pair."""
+        """Print the requested package and its direct dependencies."""
+        record = {
+            "Package": "bash",
+            "Version": "1.0",
+            "Depends": "libc6 (>= 2.34)",
+        }
         output = io.StringIO()
-        with redirect_stdout(output):
-            result = main(self.make_arguments())
+        with patch("src.cli.load_package", return_value=record):
+            with redirect_stdout(output):
+                result = main(self.make_arguments())
         self.assertEqual(result, 0)
         self.assertEqual(
             output.getvalue().splitlines(),
             [
                 "package=bash",
-                "repository=https://example.org/Packages.gz",
-                "test_mode=false",
                 "version=1.0",
+                "Direct dependencies:",
+                "  libc6 (>= 2.34)",
             ],
         )
 

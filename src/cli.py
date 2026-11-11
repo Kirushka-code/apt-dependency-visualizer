@@ -1,9 +1,16 @@
 """Command-line configuration for the dependency visualizer."""
 
+import sys
 import argparse
 import re
 from pathlib import Path
 from urllib.parse import urlsplit
+
+from src.repository import (
+    RepositoryError,
+    direct_dependencies,
+    load_package,
+)
 
 
 PACKAGE_PATTERN = r"[a-z0-9][a-z0-9+.-]*"
@@ -99,12 +106,28 @@ def parse_arguments(argv=None):
 
 
 def main(argv=None):
-    """Print the validated configuration as key-value pairs."""
+    """Load the requested package and print direct dependencies."""
     arguments = parse_arguments(argv)
-    print(f"package={arguments.package}")
-    print(f"repository={arguments.repository}")
-    print(f"test_mode={str(arguments.test_mode).lower()}")
-    print(f"version={arguments.version}")
+    if arguments.test_mode:
+        print("error: test repositories will be supported in stage 3")
+        return 1
+    try:
+        record = load_package(
+            arguments.repository,
+            arguments.package,
+            arguments.version,
+        )
+    except RepositoryError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 1
+    print(f"package={record['Package']}")
+    print(f"version={record['Version']}")
+    print("Direct dependencies:")
+    dependencies = direct_dependencies(record)
+    for dependency in dependencies:
+        print(f"  {dependency}")
+    if not dependencies:
+        print("  (none)")
     return 0
 
 
