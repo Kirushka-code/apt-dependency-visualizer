@@ -42,14 +42,13 @@ class CliTests(unittest.TestCase):
         self.assertFalse(arguments.test_mode)
 
     def test_output(self):
-        """Print the requested package and its direct dependencies."""
-        record = {
-            "Package": "bash",
-            "Version": "1.0",
-            "Depends": "libc6 (>= 2.34)",
+        """Print the reachable dependency graph."""
+        graph = {
+            "bash": ["libc6"],
+            "libc6": [],
         }
         output = io.StringIO()
-        with patch("src.cli.load_package", return_value=record):
+        with patch("src.cli.load_graph", return_value=(graph, [])):
             with redirect_stdout(output):
                 result = main(self.make_arguments())
         self.assertEqual(result, 0)
@@ -58,8 +57,9 @@ class CliTests(unittest.TestCase):
             [
                 "package=bash",
                 "version=1.0",
-                "Direct dependencies:",
-                "  libc6 (>= 2.34)",
+                "Dependency graph:",
+                "  bash -> libc6",
+                "  libc6 -> (none)",
             ],
         )
 

@@ -6,11 +6,8 @@ import re
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from src.repository import (
-    RepositoryError,
-    direct_dependencies,
-    load_package,
-)
+from src.application import load_graph
+from src.repository import RepositoryError
 
 
 PACKAGE_PATTERN = r"[a-z0-9][a-z0-9+.-]*"
@@ -106,28 +103,21 @@ def parse_arguments(argv=None):
 
 
 def main(argv=None):
-    """Load the requested package and print direct dependencies."""
+    """Build and print the dependency graph."""
     arguments = parse_arguments(argv)
-    if arguments.test_mode:
-        print("error: test repositories will be supported in stage 3")
-        return 1
     try:
-        record = load_package(
-            arguments.repository,
-            arguments.package,
-            arguments.version,
-        )
+        graph, unresolved = load_graph(arguments)
     except RepositoryError as error:
         print(f"error: {error}", file=sys.stderr)
         return 1
-    print(f"package={record['Package']}")
-    print(f"version={record['Version']}")
-    print("Direct dependencies:")
-    dependencies = direct_dependencies(record)
-    for dependency in dependencies:
-        print(f"  {dependency}")
-    if not dependencies:
-        print("  (none)")
+    print(f"package={arguments.package}")
+    print(f"version={arguments.version}")
+    print("Dependency graph:")
+    for package, dependencies in graph.items():
+        targets = ", ".join(dependencies) or "(none)"
+        print(f"  {package} -> {targets}")
+    if unresolved:
+        print("Unresolved packages: " + ", ".join(unresolved))
     return 0
 
 
