@@ -1,0 +1,1 @@
+"""Ubuntu dependency visualization application."""
