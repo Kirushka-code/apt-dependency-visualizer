@@ -20,7 +20,7 @@ jobs:
         run: python3 -m unittest discover -s tests -v
 
       - name: Compare with apt-cache dotty
-        run: python3 -m tools.compare_apt
+        run: python3 -m scripts.compare_apt
 
       - name: Show comparison report
         run: cat comparison/report.md >> "$GITHUB_STEP_SUMMARY"
