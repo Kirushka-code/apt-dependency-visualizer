@@ -1,0 +1,32 @@
+name: Compare dependency graphs
+
+"on":
+  push:
+    branches:
+      - main
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Download repository
+        uses: actions/checkout@v4
+
+      - name: Run application tests
+        run: python3 -m unittest discover -s tests -v
+
+      - name: Compare with apt-cache dotty
+        run: python3 -m tools.compare_apt
+
+      - name: Show comparison report
+        run: cat comparison/report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload comparison files
+        uses: actions/upload-artifact@v4
+        with:
+          name: apt-comparison
+          path: comparison/
