@@ -13,3 +13,13 @@ def build_graph(root, get_dependencies):
         graph[package] = dependencies
         stack.extend(reversed(dependencies))
     return graph
+
+def reverse_graph(graph):
+    """Reverse every edge while preserving all graph vertices."""
+    reversed_graph = {package: [] for package in graph}
+    for package, dependencies in graph.items():
+        for dependency in dependencies:
+            parents = reversed_graph.setdefault(dependency, [])
+            if package not in parents:
+                parents.append(package)
+    return reversed_graph

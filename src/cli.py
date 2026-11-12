@@ -5,7 +5,7 @@ import argparse
 import re
 from pathlib import Path
 from urllib.parse import urlsplit
-
+from src.reverse_dependencies import load_reverse_graph
 from src.application import load_graph
 from src.repository import RepositoryError
 
@@ -41,6 +41,13 @@ def build_parser():
         required=True,
         help="Exact package version, for example 1.0.",
     )
+
+    parser.add_argument(
+        "--reverse",
+        action="store_true",
+        help="Find packages depending on the selected package.",
+    )
+
     return parser
 
 
@@ -103,16 +110,23 @@ def parse_arguments(argv=None):
 
 
 def main(argv=None):
-    """Build and print the dependency graph."""
+    """Print forward or reverse dependency graphs."""
     arguments = parse_arguments(argv)
+    unresolved = []
     try:
-        graph, unresolved = load_graph(arguments)
+        if arguments.reverse:
+            graph = load_reverse_graph(arguments)
+        else:
+            graph, unresolved = load_graph(arguments)
     except RepositoryError as error:
         print(f"error: {error}", file=sys.stderr)
         return 1
     print(f"package={arguments.package}")
     print(f"version={arguments.version}")
-    print("Dependency graph:")
+    if arguments.reverse:
+        print("Reverse dependency graph:")
+    else:
+        print("Dependency graph:")
     for package, dependencies in graph.items():
         targets = ", ".join(dependencies) or "(none)"
         print(f"  {package} -> {targets}")
